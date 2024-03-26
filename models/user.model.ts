@@ -5,6 +5,11 @@ dotenv.config();
 
 const emailRegexPattern: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export type Role = {
+    ADMIN: "ADMIN";
+    MODERATOR: "MODERATOR";
+    USER: "USER";
+}
 export interface IUser extends Document {
     name: string;
     username: string;
@@ -17,6 +22,8 @@ export interface IUser extends Document {
     refreshToken: string;
     role: "ADMIN" | "MODERATOR" | "USER";
     dob: Date;
+    followers: Number;
+    total_blogs: Number;
     SignAccessToken: () => string;
     SignRefreshToken: () => string;
 };
@@ -60,6 +67,14 @@ const UserSchema: Schema<IUser> = new mongoose.Schema({
     },
     dob: {
         type: Date,
+    },
+    followers: {
+        type: Number,
+        default: 0,
+    },
+    total_blogs: {
+        type: Number,
+        default: 0,
     }
 }, { timestamps: true });
 

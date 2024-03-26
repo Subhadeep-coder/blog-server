@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRouter from './routes/auth.route';
 import userRouter from './routes/user.route';
+import postRouter from './routes/post.route';
 dotenv.config();
 export const app = express();
 
@@ -18,6 +19,7 @@ app.use(cors({
 // Routes
 app.use('/api/v1/auth', authRouter);
 app.use('/api/v1/user', userRouter);
+app.use('/api/v1/blog', postRouter);
 
 // Testing API
 app.get('/test', (req: Request, res: Response, next: NextFunction) => {

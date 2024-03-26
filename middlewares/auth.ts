@@ -47,22 +47,13 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 }
 
 export const authorizeRole = (...roles: string[]) => {
-    (req: Request, res: Response, next: NextFunction) => {
-        try {
-            console.log('Roles:', roles);
-            if (!roles.includes(req?.user?.role || "")) {
-                return res.status(400).json({
-                    message: `Role ${req.user?.role} is not allowed to access this resource`
-                });
-            }
-            next();
-        } catch (error) {
-            console.log(error);
-            return res.status(500).json({
-                success: false,
-                message: `Internal Server Error`,
-                error,
+    return (req: Request, res: Response, next: NextFunction) => {
+        console.log('Roles:', roles);
+        if (!roles.includes(req?.user?.role || "")) {
+            return res.status(400).json({
+                message: `Role ${req.user?.role} is not allowed to access this resource`
             });
         }
+        next();
     }
 }
