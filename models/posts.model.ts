@@ -19,6 +19,11 @@ export interface IPosts extends Document {
     },
     content: ArrayConstructor;
     tags: Array<string>;
+    activities: {
+        total_likes: number;
+        total_comments: number;
+        total_reads: number;
+    };
 };
 
 
@@ -51,7 +56,21 @@ const PostSchema: Schema<IPosts> = new mongoose.Schema({
     },
     tags: [{
         type: String
-    }]
+    }],
+    activities: {
+        total_likes: {
+            type: Number,
+            default: 0,
+        },
+        total_comments: {
+            type: Number,
+            default: 0,
+        },
+        total_reads: {
+            type: Number,
+            default: 0
+        },
+    },
 }, { timestamps: true });
 
 const PostModel: Model<IPosts> = mongoose.model('post', PostSchema);

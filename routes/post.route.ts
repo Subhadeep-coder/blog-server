@@ -7,7 +7,10 @@ import {
     countDocuments,
     createBlog,
     fetchMyBlogs,
+    getBlog,
+    isLikedByUser,
     latestBlogs,
+    likeBlog,
     searchBlogs
 } from '../controllers/post.controller';
 
@@ -18,5 +21,8 @@ postRouter.get('/get-my-blogs', isAuthenticated, authorizeRole("ADMIN", "MODERAT
 postRouter.get('/get-latest-blogs', isAuthenticated, latestBlogs);
 postRouter.get('/search-blogs', isAuthenticated, searchBlogs);
 postRouter.get('/get-blog-count', isAuthenticated, countDocuments);
+postRouter.get('/get-blog', isAuthenticated, getBlog);
+postRouter.post('/like-blog', isAuthenticated, likeBlog);
+postRouter.get('/is-liked', isAuthenticated, isLikedByUser);
 
 export default postRouter;
