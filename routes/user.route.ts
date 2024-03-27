@@ -6,6 +6,7 @@ import {
 import {
     changePassword,
     getSelf,
+    getUser,
     searchUsers,
     updateRole,
     updateUsername
@@ -13,6 +14,7 @@ import {
 const userRouter = express.Router();
 
 userRouter.get('/get-myself', isAuthenticated, getSelf);
+userRouter.get('/get-user', isAuthenticated, getUser);
 userRouter.put('/update-username', isAuthenticated, updateUsername);
 userRouter.put('/change-password', isAuthenticated, changePassword);
 userRouter.get('/search-users', isAuthenticated, searchUsers);
