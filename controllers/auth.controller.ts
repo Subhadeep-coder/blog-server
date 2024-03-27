@@ -181,10 +181,8 @@ export const login = async (req: Request, res: Response) => {
 
 export const refreshAccessToken = async (req: Request, res: Response) => {
     try {
-        console.log('[REFRESH_TOKEN_CONTROLLER]', req.cookies);
         const refreshToken = req.cookies.refresh_token as string;
         const decoded = verifyRefreshToken(refreshToken, process.env.REFRESH_TOKEN || "") as JwtPayload;
-        console.log('[REFRESH_TOKEN_CONTROLLER]: After decoding', decoded);
         if (!decoded) {
             return res.status(401).json({ message: `Couldn't refresh token` });
         }
@@ -195,12 +193,12 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         }
 
         const user = JSON.parse(session);
-        console.log('[USER]', user);
-        const tokenData = await setToken(user);
+        const newUser = await UserModel.findById(user?._id);
+        const tokenData = await setToken(newUser!);
 
         if (tokenData.success) {
             await redis.set(user._id, JSON.stringify(tokenData.updatedUser), "EX", 604800);
-            req.user = tokenData.updatedUser;
+            req.user = tokenData.updatedUser as IUser;
             return res
                 .status(200)
                 .cookie("access_token", tokenData.accessToken, accessTokenOptions)

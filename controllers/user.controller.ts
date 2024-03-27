@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import { getUserById } from "../services/user.service";
 import { setToken } from "../utils/jwt";
 import UserModel from "../models/user.model";
@@ -19,20 +19,18 @@ export const getAllUsers = (req: Request, res: Response) => {
 
 export const getSelf = async (req: Request, res: Response) => {
     try {
-        const userId = req?.user?._id;
-        const user = await getUserById(userId);
+        const user = req.user;
+        // const user = await getUserById(userId);
         if (!user) {
             return res.status(400).json({
                 message: `No User exists`
             })
         }
 
-        const {
-            success,
-            updatedUser,
-            accessToken,
-            refreshToken,
-        } = await setToken(user);
+        return res.status(200).json({
+            message: `User fetched`,
+            user
+        });
     } catch (error) {
         console.log(error);
         return res.status(500).json({

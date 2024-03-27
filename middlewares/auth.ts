@@ -13,7 +13,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
                 message: `Please Login to access this resource`
             });
         }
-
+        
         const decoded = jwt.verify(
             access_token,
             process.env.ACCESS_TOKEN as string

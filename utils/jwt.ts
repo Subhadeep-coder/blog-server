@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import { IUser } from '../models/user.model';
+import UserModel, { IUser } from '../models/user.model';
 import { redis } from './redis';
 import jwt from 'jsonwebtoken';
 dotenv.config();
@@ -33,16 +33,16 @@ export const refreshTokenOptions: TokenOptions = {
 
 export const setToken = async (user: IUser) => {
     try {
-        console.log('[SET_TOKEN]');
         const accessToken = user.SignAccessToken();
         const refreshToken = user.SignRefreshToken();
-        console.log('[BOTH_TOKENS_ARE_SET]');
 
         user.refreshToken = refreshToken;
         const updatedUser = await user.save();
 
+
+        const securedUser = await UserModel.findById(user._id).select("-password -refreshToken");
         // Set it to redis
-        redis.set(user._id, JSON.stringify(user) as any);
+        redis.set(securedUser?._id, JSON.stringify(securedUser) as any);
 
         if (process.env.NODE_DEV) {
             accessTokenOptions.secure = true;
@@ -51,7 +51,7 @@ export const setToken = async (user: IUser) => {
         // res.cookie("refresh_token", refreshToken, refreshTokenOptions);
         return {
             success: true,
-            updatedUser,
+            updatedUser: securedUser,
             accessToken,
             refreshToken,
         };
@@ -65,10 +65,10 @@ export const setToken = async (user: IUser) => {
 }
 
 export const verifyCode = (payload: any, secret: string) => {
-    const data= jwt.verify(
+    const data = jwt.verify(
         payload,
         secret
     );
-    console.log('VERIFY_TOKEN',data);
+    console.log('VERIFY_TOKEN', data);
     return data;
 }

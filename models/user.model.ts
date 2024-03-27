@@ -81,16 +81,16 @@ const UserSchema: Schema<IUser> = new mongoose.Schema({
 UserSchema.methods.SignAccessToken = function () {
     return jwt.sign(
         { id: this._id },
-        process.env.REFRESH_TOKEN || "" as string,
+        process.env.ACCESS_TOKEN || "",
         { expiresIn: '10m' }
-    )
+    );
 }
 UserSchema.methods.SignRefreshToken = function () {
     return jwt.sign(
         { id: this._id },
-        process.env.REFRESH_TOKEN || "" as string,
+        process.env.REFRESH_TOKEN || "",
         { expiresIn: '7d' }
-    )
+    );
 }
 
 const UserModel: Model<IUser> = mongoose.model("user", UserSchema);
