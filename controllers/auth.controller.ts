@@ -223,3 +223,25 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         });
     }
 }
+
+export const logout = async (req: Request, res: Response) => {
+    try {
+        res.cookie('access_token', "", { maxAge: 1 });
+        res.cookie('refresh_token', "", { maxAge: 1 });
+
+        // Delete Redis cache
+        redis.del(req.user?._id);
+
+        res.status(200).json({
+            success: true,
+            message: 'User Logged out successfully'
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: `Internal Server Error`,
+            error,
+        });
+    }
+}
