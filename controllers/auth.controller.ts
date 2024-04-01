@@ -48,24 +48,24 @@ export const signup = async (req: Request, res: Response) => {
             activationToken,
             activationCode: accountActivationCode.activationCode
         };
+        console.log('MailData reached');
+        // try {
+        //     await sendMail({
+        //         to: email,
+        //         subject: "",
+        //         template: "activation-mail.ejs",
+        //         data: mailData,
+        //     });
 
-        try {
-            await sendMail({
-                to: email,
-                subject: "",
-                template: "activation-mail.ejs",
-                data: mailData,
-            });
-
-        } catch (error) {
-            console.log(error);
-        }
-        // await emailQueue.add(`${Date.now()}`, {
-        //     to: email,
-        //     subject: '',
-        //     body: '',
-        //     mailData,
-        // });
+        // } catch (error) {
+        //     console.log(error);
+        // }
+        await emailQueue.add(`${Date.now()}`, {
+            to: email,
+            subject: '',
+            template: 'activation-mail.ejs',
+            data: mailData,
+        });
         //TODO: Send Email with magic link and Activate user
         return res.status(200).json({
             success: true,
