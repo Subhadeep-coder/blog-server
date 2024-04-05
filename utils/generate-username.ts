@@ -1,16 +1,24 @@
 import crypto from 'crypto';
 import UserModel from '../models/user.model';
 
-export const generateUsername = async (name: string) => {
-    let username = name.toLowerCase().split(' ').join('_') + crypto.randomInt(100000);
+export const generateUsername = async (name: string, email: string) => {
 
-    // Check if the generated username already exists in the database
-    let user = await UserModel.findOne({ username });
-    while (user) {
-        username = name.toLowerCase().split(' ').join('_') + crypto.randomInt(100000);
-        user = await UserModel.findOne({ username });
+    let users = await UserModel.find({}).select("username");
+    let existingUsernames = users.map(user => user.username);
+    let baseUsername = '';
+    if (Math.random() < 0.5) {
+        baseUsername = name.replace(/\s/g, '').toLowerCase() || email.split('@')[0].toLowerCase();
+    } else {
+        baseUsername = email.split('@')[0].toLowerCase() || name.replace(/\s/g, '').toLowerCase();
     }
-    console.log(username);
+
+    let username = baseUsername;
+    let suffix;
+
+    do {
+        suffix = crypto.randomInt(100000); // Generate a random number between 0 and 999
+        username = baseUsername + (suffix !== 0 ? suffix : '').toString(); // Append suffix if not zero
+    } while (existingUsernames.includes(username));
 
     return username;
 }

@@ -5,7 +5,7 @@ import IORedis from 'ioredis';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const connection = new IORedis(process.env.SERVER_REDIS_URL!, { maxRetriesPerRequest: null });
+const connection = new IORedis(process.env.SERVICE_URI!, { maxRetriesPerRequest: null });
 
 // For execute the queue
 export const emailWorker = new Worker('email-queue', async (job) => {
