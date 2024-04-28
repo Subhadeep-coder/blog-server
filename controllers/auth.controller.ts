@@ -5,17 +5,17 @@ import bcrypt from 'bcrypt';
 import { emailQueue } from "../utils/queues";
 import { generateActivationCode, verifyCode } from "../utils/generate-code";
 import { JwtPayload } from "jsonwebtoken";
-import { sendMail } from "../utils/sendMail";
 import { accessTokenOptions, refreshTokenOptions, setToken, verifyCode as verifyRefreshToken } from "../utils/jwt";
 import dotenv from 'dotenv';
 import { redis } from "../utils/redis";
+import UserService from "../services/user.service";
 dotenv.config();
 
 export const signup = async (req: Request, res: Response) => {
     try {
         const { name, email, password } = req.body;
 
-        const exists = await UserModel.findOne({ email: email });
+        const exists = await UserService.getUserByEmail(email);
         if (exists) {
             return res.status(400).json({
                 success: false,
@@ -99,7 +99,7 @@ export const activatUser = async (req: Request, res: Response) => {
         }
         console.log(user);
 
-        const newUser = await UserModel.create({
+        const newUser = await UserService.createUser({
             name: user.name,
             email: user.email,
             password: user.hashedPassword,
@@ -136,7 +136,7 @@ export const activatUser = async (req: Request, res: Response) => {
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        const existsUser = await UserModel.findOne({ email: email });
+        const existsUser = await UserService.getUserByEmail(email);
         if (!existsUser) {
             return res.status(400).json({
                 success: false,
@@ -193,7 +193,7 @@ export const refreshAccessToken = async (req: Request, res: Response) => {
         }
 
         const user = JSON.parse(session);
-        const newUser = await UserModel.findById(user?._id);
+        const newUser = await UserService.getUserById(user?._id);
         const tokenData = await setToken(newUser!);
 
         if (tokenData.success) {

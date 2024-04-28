@@ -1,8 +1,8 @@
 import { Request, response, Response } from "express";
-import { getUserById } from "../services/user.service";
 import { setToken } from "../utils/jwt";
 import UserModel from "../models/user.model";
 import bcrypt from 'bcrypt';
+import UserService from "../services/user.service";
 
 export const getAllUsers = (req: Request, res: Response) => {
     try {
@@ -20,7 +20,6 @@ export const getAllUsers = (req: Request, res: Response) => {
 export const getSelf = async (req: Request, res: Response) => {
     try {
         const user = req.user;
-        // const user = await getUserById(userId);
         if (!user) {
             return res.status(400).json({
                 message: `No User exists`
@@ -44,8 +43,7 @@ export const getSelf = async (req: Request, res: Response) => {
 export const getUser = async (req: Request, res: Response) => {
     try {
         const { username } = req.body;
-        const user = await UserModel.findOne({ username: username })
-            .select("-password -refreshToken -updatedAt");
+        const user = await UserService.getUserByUsername(username);
         return res.status(200).json({
             message: `User Fetched`,
             user
@@ -71,14 +69,12 @@ export const updateUsername = async (req: Request, res: Response) => {
         if (oldUsername === username) {
             return res.status(403).json({ message: `Same username` });
         }
-        const existsUser = await UserModel.findOne({ username: username });
+        const existsUser = await UserService.getUserByUsername(username);
         if (existsUser) {
             return res.status(400).json({ message: `User exists already with this username` });
         }
 
-        const updatedUser = await UserModel.findByIdAndUpdate(user?.id, {
-            $set: { username: username }
-        });
+        const updatedUser = await UserService.updateUsername({ id: user?.id, username });
 
         return res.status(200).json({ message: `Username updated` });
     } catch (error) {
@@ -104,11 +100,7 @@ export const changePassword = async (req: Request, res: Response) => {
 
         const salt = bcrypt.genSaltSync(10);
         const hashedPassword = bcrypt.hashSync(newPassword, salt);
-        const updatedUser = await UserModel.findByIdAndUpdate(user?.id, {
-            $set: {
-                password: hashedPassword
-            }
-        });
+        const updatedUser = await UserService.updatePassword({ id: user?.id, password: hashedPassword });
 
         return res.status(200).json({
             message: `Password updated`
@@ -127,9 +119,7 @@ export const searchUsers = async (req: Request, res: Response) => {
     try {
         let { query } = req.body;
 
-        const users = await UserModel.find({ username: new RegExp(query, "i") })
-            .limit(50)
-            .select("name username avatar -_id");
+        const users = await UserService.findUsers({ username: new RegExp(query, "i") });
 
         return res.status(200).json({
             message: `Users fetched`,
@@ -153,11 +143,7 @@ export const updateRole = async (req: Request, res: Response) => {
             return res.status(403).json({ message: `Username must be provided` });
         }
 
-        const updatedUser = await UserModel.findOneAndUpdate({ username: username }, {
-            $set: {
-                role: role.toUpperCase()
-            }
-        });
+        const updatedUser = await UserService.updateRole({ username, role });
         return res.status(200).json({ message: `User updated` });
     } catch (error) {
         console.log(error);

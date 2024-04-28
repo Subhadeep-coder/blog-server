@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import PostModel from "../models/posts.model";
-import LikeModel from "../models/like.model";
+import BlogService from "../services/blog.service";
+import LikeService from "../services/like.service";
 
 const MAX_LIMIT = 5;
 
@@ -25,26 +26,19 @@ export const createBlog = async (req: Request, res: Response) => {
         }
         tags = tags.map((tag: string) => tag.toLowerCase());
         let newBlog;
+        const data = {
+            title,
+            description,
+            thumbnail,
+            content,
+            tags,
+            authorId: user?.id
+        };
         if (id) {
-            newBlog = await PostModel.findByIdAndUpdate(id, {
-                title,
-                description,
-                thumbnail,
-                content,
-                tags,
-                authorId: user?.id
-            });
+            newBlog = await BlogService.updateBlog({ id, payload: data });
         } else {
-            newBlog = await PostModel.create({
-                title,
-                description,
-                thumbnail,
-                content,
-                tags,
-                authorId: user?.id
-            });
+            newBlog = await BlogService.createBlog(data);
         }
-
 
         return res.status(200).json({
             message: `Blog created`,
@@ -64,7 +58,7 @@ export const createBlog = async (req: Request, res: Response) => {
 export const fetchMyBlogs = async (req: Request, res: Response) => {
     try {
         const user = req.user;
-        const blogs = await PostModel.find({ authorId: user?.id });
+        const blogs = await BlogService.findBlogsOfOneUser({ authorId: user?._id });
         return res.status(200).json({
             message: `Blogs fetched`,
             blogs
@@ -83,15 +77,11 @@ export const latestBlogs = async (req: Request, res: Response) => {
     try {
         const { page } = req.body;
 
-        const blogs = await PostModel.find()
-            .populate({
-                path: 'authorId',
-                select: 'name username avatar -_id'
-            })
-            .sort({ "createdAt": -1 })
-            .select("title description thumbnail tags createdAt -_id")
-            .skip((page - 1) * MAX_LIMIT)
-            .limit(MAX_LIMIT);
+        const blogs = await BlogService.getBlogs({
+            query: {},
+            skip: (page - 1) * MAX_LIMIT,
+            limit: MAX_LIMIT
+        });
 
         return res.status(200).json({
             message: `Latest Blogs fetched`,
@@ -118,15 +108,12 @@ export const searchBlogs = async (req: Request, res: Response) => {
         } else if (author) {
             findQuery = { authorId: author };
         }
-        const blogs = await PostModel.find(findQuery)
-            .populate({
-                path: 'authorId',
-                select: 'name username avatar -_id'
-            })
-            .sort({ "createdAt": -1 })
-            .select("title description thumbnail tags createdAt -_id")
-            .skip((page - 1) * MAX_LIMIT)
-            .limit(MAX_LIMIT);
+        const blogs = await BlogService.getBlogs({
+            query: findQuery,
+            skip: (page - 1) * MAX_LIMIT,
+            limit: MAX_LIMIT
+        });
+
         return res.status(200).json({
             message: `Latest Blogs fetched`,
             blogs
@@ -175,15 +162,10 @@ export const getBlog = async (req: Request, res: Response) => {
             return res.status(403).json({ messgae: `Provide Blog Id` });
         }
 
-        const blog = await PostModel.findByIdAndUpdate(blog_id, {
-            $inc: {
-                "activities.total_reads": incrementVal
-            }
-        })
-            .populate({
-                path: 'authorId',
-                select: "name username avatar"
-            });
+        const blog = await BlogService.getBlog({
+            id: blog_id,
+            incrementVal
+        });
 
         return res.status(200).json({
             message: `Blog Fetched`,
@@ -208,24 +190,24 @@ export const likeBlog = async (req: Request, res: Response) => {
         if (!blog_id) {
             return res.status(403).json({ message: `Id required` });
         }
-        const existsBlog = await PostModel.findById(blog_id);
+        const existsBlog = await BlogService.getBlogById(blog_id);
         if (!existsBlog) {
             return res.status(400).json({ message: `Blog doesn't exists` });
         }
-        const updatedBlog = await PostModel.findByIdAndUpdate(blog_id, {
-            $inc: {
-                "activities.total_likes": incVal,
-            }
+        const updatedBlog = await BlogService.likeBlog({
+            id: blog_id,
+            incVal
         });
+
         if (isLiked) {
-            await LikeModel.create({
-                user: user?._id,
-                blog: blog_id
+            await LikeService.likeBlog({
+                userId: user?._id,
+                blogId: blog_id
             });
         } else {
-            await LikeModel.findOneAndDelete({
-                user: user?._id,
-                blog: blog_id
+            await LikeService.unLikeBlog({
+                userId: user?._id,
+                blogId: blog_id
             });
         }
 
@@ -248,13 +230,13 @@ export const isLikedByUser = async (req: Request, res: Response) => {
         if (!blog_id) {
             return res.status(403).json({ message: `Id required` });
         }
-        const existsBlog = await PostModel.findById(blog_id);
+        const existsBlog = await BlogService.getBlogById(blog_id);
         if (!existsBlog) {
             return res.status(400).json({ message: `Blog doesn't exists` });
         }
-        const isLiked = await LikeModel.findOne({
-            user: user?._id,
-            blog: blog_id,
+        const isLiked = await LikeService.findLike({
+            userId: user?._id,
+            blogId: blog_id,
         });
         return res.status(200).json({
             liked: !!isLiked
